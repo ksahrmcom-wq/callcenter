@@ -1,0 +1,10 @@
+{
+  "name": "Customer Care Management",
+  "description": "Production-grade SIP voice calling, direct WebRTC softphone, automated outbound voice campaigns, and incoming voicemail automation platform powered by SIP.js, Asterisk ARI, and real-time WebSockets.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,543 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public user profile and RBAC role metadata without PII",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Operator display name",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Operator role",
+          "enum": ["operator", "viewer", "admin", "manager"],
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Update server timestamp"
+        }
+      },
+      "required": ["uid", "displayName", "role", "createdAt", "updatedAt"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Isolated PII document for user email",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "updatedAt"]
+    },
+    "SipAccount": {
+      "title": "SipAccount",
+      "description": "SIP Trunk / PJSIP Account configuration with encrypted password",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "domain": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "username": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "encryptedPassword": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "port": {
+          "type": "number"
+        },
+        "transport": {
+          "type": "string",
+          "enum": ["UDP", "TCP", "TLS", "WSS"],
+          "maxLength": 10
+        },
+        "outboundProxy": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "callerId": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Registered", "Unregistered", "Connecting", "Failed"],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "domain",
+        "username",
+        "encryptedPassword",
+        "port",
+        "transport",
+        "outboundProxy",
+        "displayName",
+        "callerId",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Contact": {
+      "title": "Contact",
+      "description": "Authorized contact record with explicit telecom consent and DNC status",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "phoneNumber": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "consentStatus": {
+          "type": "string",
+          "enum": ["verified_opt_in", "pending", "revoked"],
+          "maxLength": 32
+        },
+        "consentSource": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "consentDate": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "dncOptOut": {
+          "type": "boolean"
+        },
+        "listName": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "notes": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "phoneNumber",
+        "consentStatus",
+        "consentSource",
+        "consentDate",
+        "dncOptOut",
+        "listName",
+        "notes",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "VoiceRecording": {
+      "title": "VoiceRecording",
+      "description": "Voice recording metadata converted to 8kHz mono PCM/u-law telephony format",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "language": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "format": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "sampleRate": {
+          "type": "number"
+        },
+        "channels": {
+          "type": "number"
+        },
+        "durationSeconds": {
+          "type": "number"
+        },
+        "telephonyConverted": {
+          "type": "boolean"
+        },
+        "audioUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "language",
+        "format",
+        "sampleRate",
+        "channels",
+        "durationSeconds",
+        "telephonyConverted",
+        "audioUrl",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "Automated outbound voice broadcast campaign configuration and progress",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "contactList": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "sipAccountId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "recordingId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Idle", "Running", "Paused", "Stopped", "Completed"],
+          "maxLength": 32
+        },
+        "maxConcurrentCalls": {
+          "type": "number"
+        },
+        "callIntervalSeconds": {
+          "type": "number"
+        },
+        "retryAttempts": {
+          "type": "number"
+        },
+        "retryIntervalSeconds": {
+          "type": "number"
+        },
+        "workingHoursStart": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "workingHoursEnd": {
+          "type": "string",
+          "maxLength": 16
+        },
+        "autoDisconnectAfterPlayback": {
+          "type": "boolean"
+        },
+        "totalContacts": {
+          "type": "number"
+        },
+        "dialedCount": {
+          "type": "number"
+        },
+        "answeredCount": {
+          "type": "number"
+        },
+        "failedCount": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "contactList",
+        "sipAccountId",
+        "recordingId",
+        "status",
+        "maxConcurrentCalls",
+        "callIntervalSeconds",
+        "retryAttempts",
+        "retryIntervalSeconds",
+        "workingHoursStart",
+        "workingHoursEnd",
+        "autoDisconnectAfterPlayback",
+        "totalContacts",
+        "dialedCount",
+        "answeredCount",
+        "failedCount",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CallLog": {
+      "title": "CallLog",
+      "description": "Call Detail Record (CDR) for outbound and inbound SIP calls",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "phoneNumber": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "contactName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["Outbound", "Inbound"],
+          "maxLength": 16
+        },
+        "sipAccountId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "sipAccountName": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Ringing", "Answered", "Busy", "Rejected", "Failed", "No Answer", "Voicemail"],
+          "maxLength": 32
+        },
+        "startTime": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "endTime": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "durationSeconds": {
+          "type": "number"
+        },
+        "recordingId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "recordingUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "campaignId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "campaignName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "phoneNumber",
+        "contactName",
+        "direction",
+        "sipAccountId",
+        "sipAccountName",
+        "status",
+        "startTime",
+        "endTime",
+        "durationSeconds",
+        "recordingId",
+        "recordingUrl",
+        "campaignId",
+        "campaignName",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "VoicemailMessage": {
+      "title": "VoicemailMessage",
+      "description": "Recorded incoming caller voice message",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "callerNumber": {
+          "type": "string",
+          "maxLength": 32
+        },
+        "callerName": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "sipAccountId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "durationSeconds": {
+          "type": "number"
+        },
+        "audioUrl": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "isRead": {
+          "type": "boolean"
+        },
+        "transcriptSummary": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "callerNumber",
+        "callerName",
+        "sipAccountId",
+        "durationSeconds",
+        "audioUrl",
+        "isRead",
+        "transcriptSummary",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public user profile document"
+    },
+    "/users/{userId}/private/{docId}": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Isolated PII subcollection for user email"
+    },
+    "/sipAccounts/{accountId}": {
+      "schema": { "$ref": "#/entities/SipAccount" },
+      "description": "SIP accounts owned by authenticated users"
+    },
+    "/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/Contact" },
+      "description": "Authorized contacts with consent and DNC records"
+    },
+    "/recordings/{recordingId}": {
+      "schema": { "$ref": "#/entities/VoiceRecording" },
+      "description": "Voice recordings for automated playback"
+    },
+    "/campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/Campaign" },
+      "description": "Automated voice calling campaigns"
+    },
+    "/callLogs/{callId}": {
+      "schema": { "$ref": "#/entities/CallLog" },
+      "description": "Call detail records (CDRs)"
+    },
+    "/voicemails/{voicemailId}": {
+      "schema": { "$ref": "#/entities/VoicemailMessage" },
+      "description": "Recorded incoming voice messages"
+    }
+  }
+}

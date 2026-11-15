@@ -1,0 +1,398 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isVerified() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'ksahrm.com@gmail.com'
+      );
+    }
+
+    // 3. Entity Validation Blueprints
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'role', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'displayName', 'role', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.uid == request.auth.uid &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        data.role is string && data.role.size() <= 20 && data.role in ['operator', 'viewer', 'admin', 'manager'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserPrivateInfo(data) {
+      return data.keys().hasAll(['uid', 'email', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.uid == request.auth.uid &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 254 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSipAccount(data) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'domain', 'username', 'encryptedPassword',
+          'port', 'transport', 'outboundProxy', 'displayName', 'callerId',
+          'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'name', 'domain', 'username', 'encryptedPassword',
+          'port', 'transport', 'outboundProxy', 'displayName', 'callerId',
+          'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.domain is string && data.domain.size() >= 1 && data.domain.size() <= 255 &&
+        data.username is string && data.username.size() >= 1 && data.username.size() <= 128 &&
+        data.encryptedPassword is string && data.encryptedPassword.size() >= 1 && data.encryptedPassword.size() <= 512 &&
+        data.port is number && data.port >= 1 && data.port <= 65535 &&
+        data.transport is string && data.transport.size() <= 10 && data.transport in ['UDP', 'TCP', 'TLS', 'WSS'] &&
+        data.outboundProxy is string && data.outboundProxy.size() <= 255 &&
+        data.displayName is string && data.displayName.size() <= 100 &&
+        data.callerId is string && data.callerId.size() <= 64 &&
+        data.status is string && data.status.size() <= 32 && data.status in ['Registered', 'Unregistered', 'Connecting', 'Failed'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidContact(data) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'phoneNumber', 'consentStatus', 'consentSource',
+          'consentDate', 'dncOptOut', 'listName', 'notes', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'name', 'phoneNumber', 'consentStatus', 'consentSource',
+          'consentDate', 'dncOptOut', 'listName', 'notes', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.phoneNumber is string && data.phoneNumber.size() >= 3 && data.phoneNumber.size() <= 32 &&
+        data.consentStatus is string && data.consentStatus.size() <= 32 && data.consentStatus in ['verified_opt_in', 'pending', 'revoked'] &&
+        data.consentSource is string && data.consentSource.size() <= 120 &&
+        data.consentDate is string && data.consentDate.size() <= 64 &&
+        data.dncOptOut is bool &&
+        data.listName is string && data.listName.size() <= 80 &&
+        data.notes is string && data.notes.size() <= 500 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidVoiceRecording(data) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'language', 'format', 'sampleRate', 'channels',
+          'durationSeconds', 'telephonyConverted', 'audioUrl', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'name', 'language', 'format', 'sampleRate', 'channels',
+          'durationSeconds', 'telephonyConverted', 'audioUrl', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.language is string && data.language.size() <= 32 &&
+        data.format is string && data.format.size() <= 32 &&
+        data.sampleRate is number && data.sampleRate >= 8000 && data.sampleRate <= 48000 &&
+        data.channels is number && data.channels >= 1 && data.channels <= 2 &&
+        data.durationSeconds is number && data.durationSeconds >= 0 && data.durationSeconds <= 3600 &&
+        data.telephonyConverted is bool &&
+        data.audioUrl is string && data.audioUrl.size() <= 500 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCampaign(data) {
+      return data.keys().hasAll([
+          'ownerId', 'name', 'contactList', 'sipAccountId', 'recordingId', 'status',
+          'maxConcurrentCalls', 'callIntervalSeconds', 'retryAttempts', 'retryIntervalSeconds',
+          'workingHoursStart', 'workingHoursEnd', 'autoDisconnectAfterPlayback',
+          'totalContacts', 'dialedCount', 'answeredCount', 'failedCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'name', 'contactList', 'sipAccountId', 'recordingId', 'status',
+          'maxConcurrentCalls', 'callIntervalSeconds', 'retryAttempts', 'retryIntervalSeconds',
+          'workingHoursStart', 'workingHoursEnd', 'autoDisconnectAfterPlayback',
+          'totalContacts', 'dialedCount', 'answeredCount', 'failedCount', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+        data.contactList is string && data.contactList.size() <= 80 &&
+        data.sipAccountId is string && data.sipAccountId.size() <= 128 &&
+        data.recordingId is string && data.recordingId.size() <= 128 &&
+        data.status is string && data.status.size() <= 32 && data.status in ['Idle', 'Running', 'Paused', 'Stopped', 'Completed'] &&
+        data.maxConcurrentCalls is number && data.maxConcurrentCalls >= 1 && data.maxConcurrentCalls <= 100 &&
+        data.callIntervalSeconds is number && data.callIntervalSeconds >= 1 && data.callIntervalSeconds <= 3600 &&
+        data.retryAttempts is number && data.retryAttempts >= 0 && data.retryAttempts <= 10 &&
+        data.retryIntervalSeconds is number && data.retryIntervalSeconds >= 5 && data.retryIntervalSeconds <= 86400 &&
+        data.workingHoursStart is string && data.workingHoursStart.size() <= 16 &&
+        data.workingHoursEnd is string && data.workingHoursEnd.size() <= 16 &&
+        data.autoDisconnectAfterPlayback is bool &&
+        data.totalContacts is number && data.totalContacts >= 0 &&
+        data.dialedCount is number && data.dialedCount >= 0 &&
+        data.answeredCount is number && data.answeredCount >= 0 &&
+        data.failedCount is number && data.failedCount >= 0 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidCallLog(data) {
+      return data.keys().hasAll([
+          'ownerId', 'phoneNumber', 'contactName', 'direction', 'sipAccountId',
+          'sipAccountName', 'status', 'startTime', 'endTime', 'durationSeconds',
+          'recordingId', 'recordingUrl', 'campaignId', 'campaignName', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'phoneNumber', 'contactName', 'direction', 'sipAccountId',
+          'sipAccountName', 'status', 'startTime', 'endTime', 'durationSeconds',
+          'recordingId', 'recordingUrl', 'campaignId', 'campaignName', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.phoneNumber is string && data.phoneNumber.size() <= 32 &&
+        data.contactName is string && data.contactName.size() <= 120 &&
+        data.direction is string && data.direction.size() <= 16 && data.direction in ['Outbound', 'Inbound'] &&
+        data.sipAccountId is string && data.sipAccountId.size() <= 128 &&
+        data.sipAccountName is string && data.sipAccountName.size() <= 100 &&
+        data.status is string && data.status.size() <= 32 && data.status in ['Ringing', 'Answered', 'Busy', 'Rejected', 'Failed', 'No Answer', 'Voicemail'] &&
+        data.startTime is string && data.startTime.size() <= 64 &&
+        data.endTime is string && data.endTime.size() <= 64 &&
+        data.durationSeconds is number && data.durationSeconds >= 0 &&
+        data.recordingId is string && data.recordingId.size() <= 128 &&
+        data.recordingUrl is string && data.recordingUrl.size() <= 500 &&
+        data.campaignId is string && data.campaignId.size() <= 128 &&
+        data.campaignName is string && data.campaignName.size() <= 120 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidVoicemail(data) {
+      return data.keys().hasAll([
+          'ownerId', 'callerNumber', 'callerName', 'sipAccountId', 'durationSeconds',
+          'audioUrl', 'isRead', 'transcriptSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId', 'callerNumber', 'callerName', 'sipAccountId', 'durationSeconds',
+          'audioUrl', 'isRead', 'transcriptSummary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.ownerId is string && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.callerNumber is string && data.callerNumber.size() <= 32 &&
+        data.callerName is string && data.callerName.size() <= 120 &&
+        data.sipAccountId is string && data.sipAccountId.size() <= 128 &&
+        data.durationSeconds is number && data.durationSeconds >= 0 &&
+        data.audioUrl is string && data.audioUrl.size() <= 500 &&
+        data.isRead is bool &&
+        data.transcriptSummary is string && data.transcriptSummary.size() <= 1000 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // 4. Collection Match Blocks
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (isOwner(adminId) || isAdmin());
+      allow list, create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (existing().uid == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(userId) && isOwner(userId) &&
+        isValidUserProfile(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (incoming().role in ['operator', 'viewer'] || isAdmin());
+      allow update: if isVerified() && isValidId(userId) && isValidUserProfile(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().uid == existing().uid &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            isOwner(userId) &&
+            incoming().role == existing().role &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerified() && isValidId(userId) && isAdmin();
+
+      // PII Split Collection
+      match /private/{docId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(docId) &&
+          (isOwner(userId) || isAdmin()) &&
+          get(/databases/$(database)/documents/users/$(userId)).data.uid == userId;
+        allow list: if false;
+        allow create: if isVerified() && isValidId(userId) && isValidId(docId) && isOwner(userId) &&
+          isValidUserPrivateInfo(incoming()) &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isVerified() && isValidId(userId) && isValidId(docId) &&
+          isValidUserPrivateInfo(incoming()) &&
+          incoming().uid == existing().uid &&
+          incoming().updatedAt == request.time && (
+            isAdmin() || (
+              isOwner(userId) &&
+              get(/databases/$(database)/documents/users/$(userId)).data.uid == request.auth.uid &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['email', 'updatedAt'])
+            )
+          );
+        allow delete: if isVerified() && isValidId(userId) && isValidId(docId) && isAdmin();
+      }
+    }
+
+    match /sipAccounts/{accountId} {
+      allow get: if isSignedIn() && isValidId(accountId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(accountId) &&
+        isValidSipAccount(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(accountId) && isValidSipAccount(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'name', 'domain', 'username', 'encryptedPassword', 'port',
+                'transport', 'outboundProxy', 'displayName', 'callerId', 'status', 'updatedAt'
+              ])
+            )
+          )
+        );
+      allow delete: if isVerified() && isValidId(accountId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /contacts/{contactId} {
+      allow get: if isSignedIn() && isValidId(contactId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(contactId) &&
+        isValidContact(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(contactId) && isValidContact(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['dncOptOut', 'consentStatus', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'name', 'phoneNumber', 'consentStatus', 'consentSource',
+                'consentDate', 'dncOptOut', 'listName', 'notes', 'updatedAt'
+              ])
+            )
+          )
+        );
+      allow delete: if isVerified() && isValidId(contactId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /recordings/{recordingId} {
+      allow get: if isSignedIn() && isValidId(recordingId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(recordingId) &&
+        isValidVoiceRecording(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(recordingId) && isValidVoiceRecording(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['name', 'language', 'telephonyConverted', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerified() && isValidId(recordingId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /campaigns/{campaignId} {
+      allow get: if isSignedIn() && isValidId(campaignId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(campaignId) &&
+        isValidCampaign(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(campaignId) && isValidCampaign(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid &&
+            existing().status != 'Completed' && (
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'dialedCount', 'answeredCount', 'failedCount', 'updatedAt']) ||
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'name', 'contactList', 'sipAccountId', 'recordingId', 'status',
+                'maxConcurrentCalls', 'callIntervalSeconds', 'retryAttempts', 'retryIntervalSeconds',
+                'workingHoursStart', 'workingHoursEnd', 'autoDisconnectAfterPlayback',
+                'totalContacts', 'dialedCount', 'answeredCount', 'failedCount', 'updatedAt'
+              ])
+            )
+          )
+        );
+      allow delete: if isVerified() && isValidId(campaignId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /callLogs/{callId} {
+      allow get: if isSignedIn() && isValidId(callId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(callId) &&
+        isValidCallLog(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(callId) && isValidCallLog(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['status', 'endTime', 'durationSeconds', 'recordingUrl', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerified() && isValidId(callId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /voicemails/{voicemailId} {
+      allow get: if isSignedIn() && isValidId(voicemailId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (existing().ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerified() && isValidId(voicemailId) &&
+        isValidVoicemail(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerified() && isValidId(voicemailId) && isValidVoicemail(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['isRead', 'transcriptSummary', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerified() && isValidId(voicemailId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+  }
+}

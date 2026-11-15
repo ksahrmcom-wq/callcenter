@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  voxpulse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: voxpulse-callcenter:latest
+    container_name: voxpulse-callcenter
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
