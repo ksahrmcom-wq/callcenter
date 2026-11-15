@@ -26,9 +26,9 @@ export interface ResolvedSipEndpoint {
 
 export function cleanSipHostAndPort(
   domainInput: string,
-  outboundProxyInput: string,
-  defaultPort: number,
-  transport: 'UDP' | 'TCP' | 'TLS' | 'WSS',
+  outboundProxyInput?: string,
+  defaultPort: number = 5060,
+  transport: 'UDP' | 'TCP' | 'TLS' | 'WSS' = 'UDP',
   loopbackPort?: number
 ): ResolvedSipEndpoint {
   const stripScheme = (s: string) =>
@@ -96,12 +96,17 @@ async function discoverLocalIpForHost(targetHost: string, targetPort: number): P
       } catch {
         // ignore
       }
-      resolve(ip || '127.0.0.1');
+      // If IP is link-local or empty, fallback to clean hostname or standard IP
+      if (!ip || ip.startsWith('169.254.') || ip === '0.0.0.0') {
+        resolve('10.0.0.1');
+      } else {
+        resolve(ip);
+      }
     };
-    const timer = setTimeout(() => done('127.0.0.1'), 400);
+    const timer = setTimeout(() => done('10.0.0.1'), 500);
     sock.once('error', () => {
       clearTimeout(timer);
-      done('127.0.0.1');
+      done('10.0.0.1');
     });
     try {
       sock.connect(targetPort || 5060, targetHost, () => {
@@ -212,6 +217,7 @@ export async function executeRealSipRegister(
     let authAttempts = 0;
     let udpSock: dgram.Socket | null = null;
     let tcpSock: net.Socket | tls.TLSSocket | null = null;
+    const retransmitTimers: NodeJS.Timeout[] = [];
 
     const finish = (
       success: boolean,
@@ -221,6 +227,7 @@ export async function executeRealSipRegister(
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      retransmitTimers.forEach((t) => clearTimeout(t));
       try {
         if (udpSock) udpSock.close();
       } catch {
@@ -245,7 +252,7 @@ export async function executeRealSipRegister(
       finish(
         false,
         408,
-        `Request Timeout (No ${endpoint.transport} response from ${endpoint.host}:${endpoint.port})`
+        `Request Timeout (No ${endpoint.transport} response from ${endpoint.host}:${endpoint.port}). If ${endpoint.host} uses IP authentication without REGISTER, click "Set Active (IP Trunk)". Also ensure your server IP is whitelisted by your SIP provider.`
       );
     }, timeoutMs);
 
@@ -347,6 +354,26 @@ export async function executeRealSipRegister(
         const pkt1 = buildRegisterPacket(1, localPort);
         txPackets.push(pkt1);
         sendUdp(pkt1);
+
+        // Retransmit REGISTER on UDP if no response received (Timer T1 WAN compensation)
+        if (timeoutMs > 1000) {
+          retransmitTimers.push(
+            setTimeout(() => {
+              if (!settled && rxPackets.length === 0) {
+                sendUdp(pkt1);
+              }
+            }, 800)
+          );
+        }
+        if (timeoutMs > 2500) {
+          retransmitTimers.push(
+            setTimeout(() => {
+              if (!settled && rxPackets.length === 0) {
+                sendUdp(pkt1);
+              }
+            }, 2000)
+          );
+        }
       });
     }
   });

@@ -121,7 +121,11 @@ export class BrowserSipJsController {
     account: SipAccount,
     secretPassword?: string
   ): Promise<{ connected: boolean; mode: 'SIP.js WebRTC WSS' | 'Asterisk ARI Bridge' }> {
-    if (account.transport === 'WSS' && account.outboundProxy.startsWith('wss://')) {
+    const wssServer = account.outboundProxy?.startsWith('wss://')
+      ? account.outboundProxy
+      : `wss://${account.domain}:${account.port || 8089}/ws`;
+
+    if (account.transport === 'WSS') {
       try {
         const uri = UserAgent.makeURI(`sip:${account.username}@${account.domain}`);
         if (!uri) throw new Error('Invalid SIP URI');
@@ -132,14 +136,14 @@ export class BrowserSipJsController {
           authorizationPassword: secretPassword || undefined,
           displayName: account.displayName || account.name,
           transportOptions: {
-            server: account.outboundProxy,
+            server: wssServer,
             connectionTimeout: 4,
           },
           logLevel: 'warn',
         });
 
         this.registerer = new Registerer(this.userAgent);
-        this.onLog(`[SIP.js] Initialized UserAgent for ${uri.toString()} via ${account.outboundProxy}`);
+        this.onLog(`[SIP.js] Initialized UserAgent for ${uri.toString()} via ${wssServer}`);
         return { connected: true, mode: 'SIP.js WebRTC WSS' };
       } catch (err) {
         this.onLog(

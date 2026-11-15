@@ -11,7 +11,7 @@ export interface SipAccount {
   hasPassword?: boolean;
   port: number;
   transport: SipTransport;
-  outboundProxy: string;
+  outboundProxy?: string;
   displayName: string;
   callerId: string;
   status: SipConnectionStatus;

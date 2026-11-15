@@ -496,7 +496,7 @@ export default function App() {
 
   const handleRegisterSipAccount = async (
     id: string,
-    action: 'register' | 'unregister' | 'test'
+    action: 'register' | 'unregister' | 'test' | 'force-active'
   ) => {
     requirePermission('register_sip_accounts', 'register or unregister SIP trunks');
     await fetch(`/api/sip-accounts/${id}/register`, {

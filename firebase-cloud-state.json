@@ -2,18 +2,18 @@
   "projectId": "my-agent-507708",
   "databaseId": "ai-studio-customercaremana-815d2499-8678-4614-9cd7-dbeac3731ede",
   "storageBucket": "my-agent-507708.firebasestorage.app",
-  "syncedAt": "2026-11-15T06:41:42.980Z",
+  "syncedAt": "2026-11-15T08:46:16.604Z",
   "firebaseSync": {
     "connected": true,
     "autoSaveEnabled": true,
     "connectedAt": "2026-11-01T08:00:00Z",
-    "lastSyncedAt": "2026-11-15T06:41:42.980Z",
-    "lastOperationSummary": "Auto-saved state change (firebase:synced) to Firebase Firestore",
+    "lastSyncedAt": "2026-11-15T08:46:16.604Z",
+    "lastOperationSummary": "Auto-saved SIP Account /sipAccounts/sip-1794731511565 to Firebase Firestore",
     "projectId": "my-agent-507708",
     "databaseId": "ai-studio-customercaremana-815d2499-8678-4614-9cd7-dbeac3731ede",
     "storageBucket": "my-agent-507708.firebasestorage.app",
     "counts": {
-      "sipAccounts": 3,
+      "sipAccounts": 4,
       "users": 4,
       "rbacMatrix": 13,
       "recordings": 3,
@@ -23,9 +23,97 @@
       "callbacks": 1,
       "callLogs": 5,
       "totalFiles": 5,
-      "totalDocuments": 38
+      "totalDocuments": 39
     },
     "recentEvents": [
+      {
+        "id": "fbsync-1794732376604-uoa0",
+        "timestamp": "2026-11-15T08:46:16.604Z",
+        "operation": "AUTO_SAVE",
+        "collection": "sipAccounts",
+        "documentId": "sip-1794731511565",
+        "summary": "Auto-saved SIP Account /sipAccounts/sip-1794731511565 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732370726-xqeb",
+        "timestamp": "2026-11-15T08:46:10.726Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732347308-62fw",
+        "timestamp": "2026-11-15T08:45:47.308Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732318111-8ky6",
+        "timestamp": "2026-11-15T08:45:18.110Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732293344-xbkl",
+        "timestamp": "2026-11-15T08:44:53.344Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732268842-pmsi",
+        "timestamp": "2026-11-15T08:44:28.842Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732094818-jvc9",
+        "timestamp": "2026-11-15T08:41:34.818Z",
+        "operation": "AUTO_SAVE",
+        "collection": "sipAccounts",
+        "documentId": "sip-1794731511565",
+        "summary": "Auto-saved SIP Account /sipAccounts/sip-1794731511565 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794732063630-r7vr",
+        "timestamp": "2026-11-15T08:41:03.630Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794731515092-ck1s",
+        "timestamp": "2026-11-15T08:31:55.092Z",
+        "operation": "AUTO_SAVE",
+        "collection": "sipAccounts",
+        "documentId": "sip-1794731511565",
+        "summary": "Auto-saved SIP Account /sipAccounts/sip-1794731511565 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794731511565-i146",
+        "timestamp": "2026-11-15T08:31:51.565Z",
+        "operation": "AUTO_SAVE",
+        "collection": "sipAccounts",
+        "documentId": "sip-1794731511565",
+        "summary": "Auto-saved SIP Account /sipAccounts/sip-1794731511565 to Firebase Firestore"
+      },
+      {
+        "id": "fbsync-1794731497092-mzwp",
+        "timestamp": "2026-11-15T08:31:37.092Z",
+        "operation": "AUTO_SAVE",
+        "collection": "users",
+        "documentId": "usr-admin-1",
+        "summary": "Auto-saved User Account /users/usr-admin-1 to Firebase Firestore"
+      },
       {
         "id": "fbsync-1794724902980-6ghv",
         "timestamp": "2026-11-15T06:41:42.980Z",
@@ -54,6 +142,25 @@
   },
   "collections": {
     "sipAccounts": [
+      {
+        "id": "sip-1794731511565",
+        "ownerId": "system",
+        "name": "banglacall",
+        "domain": "103.170.231.10",
+        "username": "09649555566",
+        "passwordMasked": "••••••••••••",
+        "hasPassword": true,
+        "port": 5060,
+        "transport": "UDP",
+        "outboundProxy": "103.170.231.10:5060",
+        "displayName": "09649555566",
+        "callerId": "09649555566",
+        "status": "Registered",
+        "createdAt": "2026-11-15T08:31:51.565Z",
+        "updatedAt": "2026-11-15T08:46:16.604Z",
+        "latencyMs": 1,
+        "lastRegisteredAt": "2026-11-15T08:46:16.604Z"
+      },
       {
         "id": "sip-trunk-us-west",
         "ownerId": "system",
@@ -115,7 +222,8 @@
     "encryptedPasswordVault": {
       "sip-trunk-us-west": "c76b989c92c1a973e12fb2ff:0e276b9eebee3601dfc3b6dcff568176:c5e0b4b02f3fb68ebfbefc086933fecec7e32b5902",
       "sip-webrtc-edge": "faea56007be6a954dc9548c2:7bfc4f2e4fb271947312cd8f50a89e25:36bb37afebe9c4414e908d292e9514347ae860dbcecd",
-      "sip-eu-tls": "98148e5ec15e0766e4223f3c:351c97f2d3d4b18be395c8f8451e0f6e:c06bd12045f749ea92841b10a5b0c4e2147e3a8d"
+      "sip-eu-tls": "98148e5ec15e0766e4223f3c:351c97f2d3d4b18be395c8f8451e0f6e:c06bd12045f749ea92841b10a5b0c4e2147e3a8d",
+      "sip-1794731511565": "79d7ed08371d9f9dca501cac:bdd028676526ba3ba1021d56b791fdf3:5e05276c2be8b27281c151"
     },
     "userPasswordVault": {
       "usr-admin-1": "fc71c1aaca29895721456583:886097b7ce33d5f1c2d94f0620537198:492be38474a7ddbbed3f",
@@ -495,7 +603,7 @@
         "ownerId": "system",
         "name": "November Clinic Appointment Reminders",
         "contactList": "Medical Appointment Confirmations",
-        "sipAccountId": "sip-trunk-us-west",
+        "sipAccountId": "sip-1794731511565",
         "recordingId": "rec-appt-confirm",
         "status": "Idle",
         "maxConcurrentCalls": 4,
@@ -520,7 +628,7 @@
         "ownerId": "system",
         "name": "Tier-1 SLA Scheduled Maintenance Notice",
         "contactList": "SLA Maintenance Advisories",
-        "sipAccountId": "sip-webrtc-edge",
+        "sipAccountId": "sip-1794731511565",
         "recordingId": "rec-noc-window",
         "status": "Completed",
         "maxConcurrentCalls": 2,

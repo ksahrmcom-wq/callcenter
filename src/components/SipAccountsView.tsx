@@ -17,8 +17,8 @@ import type { SipAccount, SipLogEntry, SipTransport } from '../types/sip';
 interface SipAccountsViewProps {
   sipAccounts: SipAccount[];
   sipLogs: SipLogEntry[];
-  onSaveAccount: (payload: Partial<SipAccount> & { password?: string }) => Promise<void>;
-  onRegisterAction: (id: string, action: 'register' | 'unregister' | 'test') => Promise<void>;
+  onSaveAccount: (payload: Partial<SipAccount> & { password?: string; isIpTrunk?: boolean }) => Promise<void>;
+  onRegisterAction: (id: string, action: 'register' | 'unregister' | 'test' | 'force-active') => Promise<void>;
   onDeleteAccount: (id: string) => Promise<void>;
 }
 
@@ -37,7 +37,7 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
   const [password, setPassword] = useState('');
   const [port, setPort] = useState(5060);
   const [transport, setTransport] = useState<SipTransport>('UDP');
-  const [outboundProxy, setOutboundProxy] = useState('');
+  const [isIpTrunk, setIsIpTrunk] = useState(false);
   const [displayName, setDisplayName] = useState('');
   const [callerId, setCallerId] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
     setPassword('');
     setPort(5060);
     setTransport('UDP');
-    setOutboundProxy('');
+    setIsIpTrunk(false);
     setDisplayName('');
     setCallerId('');
     setFormError(null);
@@ -73,7 +73,7 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
     setPassword('');
     setPort(acc.port);
     setTransport(acc.transport);
-    setOutboundProxy(acc.outboundProxy);
+    setIsIpTrunk(acc.status === 'Registered' && !acc.hasPassword);
     setDisplayName(acc.displayName);
     setCallerId(acc.callerId);
     setFormError(null);
@@ -95,21 +95,27 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
         password,
         port: Number(port),
         transport,
-        outboundProxy: outboundProxy.trim() || `${domain.trim()}:${port}`,
         displayName: displayName.trim() || username.trim() || name.trim(),
         callerId: effectiveCallerId,
+        isIpTrunk,
+        status: isIpTrunk ? 'Registered' : 'Connecting',
       });
       setShowForm(false);
       setStatusFeedback({
         type: 'ok',
-        text: `Saved SIP account ${username.trim()}@${domain.trim()}:${port} (${transport}) and dispatched PJSIP REGISTER.`,
+        text: isIpTrunk
+          ? `Saved SIP trunk ${username.trim()}@${domain.trim()}:${port} (${transport}) as active Direct IP Trunk.`
+          : `Saved SIP account ${username.trim()}@${domain.trim()}:${port} (${transport}) and dispatched PJSIP REGISTER.`,
       });
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Failed to save SIP account');
     }
   };
 
-  const handleRegClick = async (id: string, action: 'register' | 'unregister' | 'test') => {
+  const handleRegClick = async (
+    id: string,
+    action: 'register' | 'unregister' | 'test' | 'force-active'
+  ) => {
     setBusyId(id);
     setStatusFeedback(null);
     try {
@@ -316,19 +322,25 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
 
             <div>
               <label
-                htmlFor="sip-proxy"
+                htmlFor="sip-trunk-mode"
                 className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1"
               >
-                Outbound Proxy
+                SIP Trunk Peering Mode
               </label>
-              <input
-                id="sip-proxy"
-                type="text"
-                value={outboundProxy}
-                onChange={(e) => setOutboundProxy(e.target.value)}
-                placeholder="sip.telnyx.com:5060 or wss://pbx:8089/ws"
-                className="w-full rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-3 py-2 text-sm font-mono text-slate-900 dark:text-slate-100"
-              />
+              <select
+                id="sip-trunk-mode"
+                value={isIpTrunk ? 'ip_trunk' : 'register'}
+                onChange={(e) => setIsIpTrunk(e.target.value === 'ip_trunk')}
+                className="w-full rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-slate-100"
+              >
+                <option value="register">Standard SIP Client (REGISTER with Digest Auth)</option>
+                <option value="ip_trunk">Static IP Trunk (Direct IP Auth / No REGISTER)</option>
+              </select>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                {isIpTrunk
+                  ? 'Calls are routed straight to the SIP Domain without registration. Ideal for telecom gateways and IP-whitelisted carriers.'
+                  : 'Sends RFC 3261 REGISTER packets directly to the SIP Domain host.'}
+              </p>
             </div>
 
             <div>
@@ -454,9 +466,9 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
                     <dd className="font-mono text-slate-500">{acc.passwordMasked} (AES-256)</dd>
                   </div>
                   <div className="flex justify-between">
-                    <dt className="text-slate-500 dark:text-slate-400">Outbound Proxy</dt>
-                    <dd className="font-mono text-slate-900 dark:text-slate-200 truncate max-w-[180px]">
-                      {acc.outboundProxy}
+                    <dt className="text-slate-500 dark:text-slate-400">Direct Endpoint</dt>
+                    <dd className="font-mono text-slate-900 dark:text-slate-200">
+                      {acc.domain}:{acc.port} ({acc.transport})
                     </dd>
                   </div>
                   <div className="flex justify-between">
@@ -481,15 +493,27 @@ export const SipAccountsView: React.FC<SipAccountsViewProps> = ({
                       Unregister
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      aria-label={`Register ${acc.name}`}
-                      onClick={() => handleRegClick(acc.id, 'register')}
-                      className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer whitespace-nowrap shrink-0"
-                    >
-                      {isBusy ? 'Registering...' : 'Register'}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        aria-label={`Register ${acc.name}`}
+                        onClick={() => handleRegClick(acc.id, 'register')}
+                        className="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium cursor-pointer whitespace-nowrap shrink-0"
+                      >
+                        {isBusy ? 'Registering...' : 'Register'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        aria-label={`Set ${acc.name} as Active IP Trunk`}
+                        onClick={() => handleRegClick(acc.id, 'force-active')}
+                        className="py-1.5 px-2.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 cursor-pointer whitespace-nowrap shrink-0"
+                        title="Direct IP Peering: Mark trunk active for immediate calling without REGISTER handshake"
+                      >
+                        Set Active (IP Trunk)
+                      </button>
+                    </>
                   )}
 
                   <button

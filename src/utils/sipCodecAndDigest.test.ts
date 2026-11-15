@@ -141,6 +141,27 @@ test('executeRealSipRegister and ActivePjsipCallController perform real UDP RFC 
 
     assert.ok(statesObserved.includes('Ringing'));
     assert.ok(statesObserved.includes('Answered'));
+
+    // Test direct SIP account with NO outboundProxy defined
+    const directAccount = {
+      id: 'test-sip-direct',
+      ownerId: 'user-1',
+      name: 'Direct Peering Trunk',
+      domain: `127.0.0.1:${uas.port}`,
+      username: '1002',
+      passwordMasked: '••••••••',
+      hasPassword: true,
+      port: uas.port,
+      transport: 'UDP' as const,
+      displayName: 'Direct Agent',
+      callerId: '1002',
+      status: 'Unregistered' as const,
+      createdAt: '',
+      updatedAt: '',
+    };
+    const directResult = await executeRealSipRegister(directAccount, 'SecretPass123', false, 2000);
+    assert.equal(directResult.success, true);
+    assert.equal(directResult.statusCode, 200);
   } finally {
     uas.close();
   }
